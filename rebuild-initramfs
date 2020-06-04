@@ -24,7 +24,7 @@ sudo_if_required() {
 }
 
 print_help() {
-    printf <<EOF
+    cat <<EOF
 rebuild-initramfs: rebuild some (or all) initramfs images using dracut.
 
 Usage: rebuild-initramfs [-h | --help] [-v | --verbose]
@@ -39,8 +39,8 @@ if [[ -t 1 ]]; then
     COLOROFF="\e[39m"
 fi
 
-[[ $(id -u) == 0 ]] && [[ -z "$SUDO_UID" ]] ||
-    printf "${YELLOW}WARNING:${COLOROFF} Don't run this script with sudo. This script will call out to sudo if required.\n" >&2
+[[ $(id -u) == 0 ]] && ([[ -z "$SUDO_UID" ]] ||
+    printf "${YELLOW}WARNING:${COLOROFF} Don't run this script with sudo. This script will call out to sudo if required.\n" >&2)
 
 for arg in "$@"
 do
