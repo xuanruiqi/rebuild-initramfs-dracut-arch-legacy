@@ -66,7 +66,7 @@ do
     esac
 done
 
-if [[ "$verbose" == "1" ]] && [[ "$quiet" == "1" ]]; do
+if [[ "$verbose" == "1" ]] && [[ "$quiet" == "1" ]]; then
     >&2 echo "Cannot be verbose and quiet simultaneously!"
     exit 1
 fi
@@ -83,7 +83,7 @@ for k in "${kernels[@]}"; do
         break
     fi
     
-    [[ -z $quiet ]] && printf 'Rebuild initramfs for: %s...\n' "$base"
+    ([[ -n $default_yes ]] && [[ -n $quiet ]]) || printf 'Rebuild initramfs for: %s...\n' "$base"
 
     if [[ -z $default_yes ]]; then
         prompt
@@ -92,10 +92,18 @@ for k in "${kernels[@]}"; do
     fi
 
     if [[ "$do_build" == "1" ]]; then
-        [[ -z $verbose ]] || echo "Running: dracut -f -N /boot/initramfs-${base}.img --kver ${version}"
-        sudo_if_required dracut -f -N /boot/initramfs-"${base}".img --kver "${version}"
-        [[ -z $verbose ]] || echo "Running: dracut -f --no-hostonly-cmdline /boot/initramfs-${base}-fallback.img --kver ${version}"
-        sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+        if [[ -n $verbose ]]; then
+            echo "Running: dracut -v -f -N /boot/initramfs-${base}.img --kver ${version}"
+            sudo_if_required dracut -v -f -N /boot/initramfs-"${base}".img --kver "${version}"
+            echo "Running: dracut -v -f --no-hostonly-cmdline /boot/initramfs-${base}-fallback.img --kver ${version}"
+            sudo_if_required dracut -v -f --no-hostonly-cmdline /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+        elif [[ -n $quiet ]]; then
+            sudo_if_required dracut -q -f -N /boot/initramfs-"${base}".img --kver "${version}"
+            sudo_if_required dracut -q -f --no-hostonly-cmdline /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+        else
+            sudo_if_required dracut -f -N /boot/initramfs-"${base}".img --kver "${version}"
+            sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+        fi
     else
         [[ -z $verbose ]] || echo "Not rebuilding initramfs image for ${version}."
     fi 
