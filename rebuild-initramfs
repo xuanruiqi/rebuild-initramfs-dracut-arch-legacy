@@ -2,6 +2,8 @@
 
 do_build=
 verbose=
+default_yes=
+quiet=
 
 prompt() {
     while true; do
@@ -30,7 +32,9 @@ rebuild-initramfs: rebuild some (or all) initramfs images using dracut.
 Usage: rebuild-initramfs [-h | --help] [-v | --verbose]
 Command line options:
     -h, --help: prints this help message
+    -y, --yes: say "yes" to all questions
     -v, --verbose: be more verbose
+    -q, --quiet: be quiet
 EOF
 }
 
@@ -39,6 +43,7 @@ if [[ -t 1 ]]; then
     COLOROFF="\e[39m"
 fi
 
+# shellcheck disable=SC2059
 [[ $(id -u) == 0 ]] && ([[ -z "$SUDO_UID" ]] ||
     printf "${YELLOW}WARNING:${COLOROFF} Don't run this script with sudo. This script will call out to sudo if required.\n" >&2)
 
@@ -49,12 +54,24 @@ do
             verbose=1
             echo "Running in verbose mode."
             shift;;
+        -y|--yes)
+            default_yes=1
+            shift;;
+        -q|--quiet)
+            quiet=1
+            shift;;
         -h|--help)
             print_help
             exit;;
     esac
 done
 
+if [[ "$verbose" == "1" ]] && [[ "$quiet" == "1" ]]; do
+    >&2 echo "Cannot be verbose and quiet simultaneously!"
+    exit 1
+fi
+
+# Generate a list of kernels to work on
 mapfile -t kernels < <(ls -d /usr/lib/modules/*/)
 
 for k in "${kernels[@]}"; do
@@ -66,13 +83,18 @@ for k in "${kernels[@]}"; do
         break
     fi
     
-    printf 'Rebuild initramfs for: %s...\n' "$base"
-    prompt
+    [[ -z $quiet ]] && printf 'Rebuild initramfs for: %s...\n' "$base"
+
+    if [[ -z $default_yes ]]; then
+        prompt
+    else
+        do_build=1
+    fi
 
     if [[ "$do_build" == "1" ]]; then
-        echo "Running: dracut -f -N /boot/initramfs-${base}.img --kver ${version}"
+        [[ -z $verbose ]] || echo "Running: dracut -f -N /boot/initramfs-${base}.img --kver ${version}"
         sudo_if_required dracut -f -N /boot/initramfs-"${base}".img --kver "${version}"
-        echo "Running: dracut -f --no-hostonly-cmdline /boot/initramfs-${base}-fallback.img --kver ${version}"
+        [[ -z $verbose ]] || echo "Running: dracut -f --no-hostonly-cmdline /boot/initramfs-${base}-fallback.img --kver ${version}"
         sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}"-fallback.img --kver "${version}"
     else
         [[ -z $verbose ]] || echo "Not rebuilding initramfs image for ${version}."
