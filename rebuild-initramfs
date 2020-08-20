@@ -83,7 +83,7 @@ for k in "${kernels[@]}"; do
         break
     fi
     
-    ([[ -n $default_yes ]] && [[ -n $quiet ]]) || printf 'Rebuild initramfs for: %s...\n' "$base"
+    [[ -n $default_yes ]] && [[ -n $quiet ]] || printf 'Rebuild initramfs for: %s...\n' "$base"
 
     if [[ -z $default_yes ]]; then
         prompt
@@ -93,16 +93,20 @@ for k in "${kernels[@]}"; do
 
     if [[ "$do_build" == "1" ]]; then
         if [[ -n $verbose ]]; then
-            echo "Running: dracut -v -f -N /boot/initramfs-${base}.img --kver ${version}"
-            sudo_if_required dracut -v -f -N /boot/initramfs-"${base}".img --kver "${version}"
-            echo "Running: dracut -v -f --no-hostonly-cmdline /boot/initramfs-${base}-fallback.img --kver ${version}"
-            sudo_if_required dracut -v -f --no-hostonly-cmdline /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+            echo "Building initramfs for ${version}"
+            echo "Running: dracut -v -f --no-hostonly-cmdline /boot/initramfs-${base}.img --kver ${version}"
+            sudo_if_required dracut -v -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
+            echo "Building fallback initramfs for ${version}"
+            echo "Running: dracut -v -f -N /boot/initramfs-${base}-fallback.img --kver ${version}"
+            sudo_if_required dracut -v -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
         elif [[ -n $quiet ]]; then
-            sudo_if_required dracut -q -f -N /boot/initramfs-"${base}".img --kver "${version}"
-            sudo_if_required dracut -q -f --no-hostonly-cmdline /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+            sudo_if_required dracut -q -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
+            sudo_if_required dracut -q -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
         else
-            sudo_if_required dracut -f -N /boot/initramfs-"${base}".img --kver "${version}"
-            sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+            echo "Building initramfs for ${version}"
+            sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
+            echo "Building fallback initramfs for ${version}"
+            sudo_if_required dracut -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
         fi
     else
         [[ -z $verbose ]] || echo "Not rebuilding initramfs image for ${version}."
