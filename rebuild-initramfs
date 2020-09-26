@@ -76,7 +76,7 @@ mapfile -t kernels < <(ls -d /usr/lib/modules/*/)
 
 for k in "${kernels[@]}"; do
     version=$(basename "$k")
-    base=$(pacman -Qoq "$k" 2>/dev/null | head -n -1)
+    base=$(pacman -Qoq "$k" 2>/dev/null | head -n 1)
 
     if [[ "$base" == "" ]]; then
         [[ -z $verbose ]] || >&2 echo "${version} is detected, but it is not an installed kernel!"
