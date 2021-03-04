@@ -4,8 +4,9 @@ do_build=
 verbose=
 default_yes=
 quiet=
-hook=
+sudo_ok=
 rebuild_for=
+no_colors=
 
 prompt() {
     while true; do
@@ -16,7 +17,7 @@ prompt() {
             N|n ) do_build=0; break;;
             * ) echo "Please answer y or n!";;
         esac
-    done 
+    done
 }
 
 sudo_if_required() {
@@ -28,7 +29,8 @@ sudo_if_required() {
 }
 
 rebuild_for_base() {
-    [[ -n $default_yes ]] && [[ -n $quiet ]] || printf 'Rebuild initramfs for: %s...\n' "$base"
+    [[ -n $default_yes ]] && [[ -n $quiet ]] ||
+        printf '%b::%b Rebuild initramfs for: %s...\n' "$BLUE" "$COLOROFF" "$base"
 
     if [[ -z $default_yes ]]; then
         prompt
@@ -38,51 +40,51 @@ rebuild_for_base() {
 
     if [[ "$do_build" == "1" ]]; then
         if [[ -n $verbose ]]; then
-            echo "Building initramfs for ${version}"
-            echo "Running: dracut -v -f --no-hostonly-cmdline /boot/initramfs-${base}.img --kver ${version}"
+            printf "%b*%b Building initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
+            printf "%bINFO%b: Running: dracut -v -f --no-hostonly-cmdline /boot/initramfs-%s.img --kver %s\n" "$GREEN" "$COLOROFF" \
+                   "${base}" "${version}"
             sudo_if_required dracut -v -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
-            echo "Building fallback initramfs for ${version}"
-            echo "Running: dracut -v -f -N /boot/initramfs-${base}-fallback.img --kver ${version}"
+            printf "%b*%b Building fallback initramfs for %s\n" "$GREEN" "$COLOROFF" "${version}"
+            printf "%bINFO%b: Running: dracut -v -f -N /boot/initramfs-%s-fallback.img --kver %s\n" "$GREEN" "$COLOROFF" \
+                   "${base}" "${version}"
             sudo_if_required dracut -v -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
         elif [[ -n $quiet ]]; then
             sudo_if_required dracut -q -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
             sudo_if_required dracut -q -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
         else
-            echo "Building initramfs for ${version}"
+            printf "%b*%b Building initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
             sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
-            echo "Building fallback initramfs for ${version}"
+            printf "%b*%b Building fallback initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
             sudo_if_required dracut -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
         fi
     else
-        [[ -z $verbose ]] || echo "Not rebuilding initramfs image for ${version}."
+        [[ -z $verbose ]] || printf "%bINFO:%b Not rebuilding initramfs image for %s.\n" "$GREEN" "$COLOROFF" "${version}"
     fi
 }
 
 print_help() {
     cat <<EOF
 rebuild-initramfs: rebuild some (or all) initramfs images using dracut.
+Usage: rebuild-initramfs [-h | --help] [-v | --verbose] [kernel package name]
 
-Usage: rebuild-initramfs [-h | --help] [-v | --verbose]
-Command line options:
-    -h, --help: prints this help message
-    -y, --yes: say "yes" to all questions
-    -v, --verbose: be more verbose
-    -k, --hook: running inside a pacman/ALPM hook
-    -q, --quiet: be quiet
+If a kernel package name is not given, then by default all initramfs images will be rebuilt.
+
+  Options:
+   -h, --help       Prints this help message
+   -y, --yes        Say "yes" to all questions
+   -v, --verbose    Be more verbose
+   -k, --hook       Running inside a pacman/ALPM hook. This will suppress some warnings, and
+                    enable "-y" as well. Do NOT use it when you are running in interactive mode.
+   --no-colors      Don't use colors.
+   -q, --quiet      Be quiet
 EOF
 }
-
-if [[ -t 1 ]]; then
-    YELLOW="\e[33m"
-    COLOROFF="\e[39m"
-fi
 
 for arg in "$@"
 do
     case $arg in
         -v|--verbose)
             verbose=1
-            echo "Running in verbose mode."
             shift;;
         -y|--yes)
             default_yes=1
@@ -94,7 +96,11 @@ do
             print_help
             exit 1;;
         -k|--hook)
-            hook=1
+            default_yes=1
+            sudo_ok=1
+            shift;;
+        --no-colors)
+            no_colors=1
             shift;;
         *)
             rebuild_for=$arg
@@ -102,23 +108,33 @@ do
     esac
 done
 
-# shellcheck disable=SC2059
-[[ $(id -u) == 0 ]] && ([[ -z "$SUDO_UID" ]] || ([[ -n "$hook" ]] ||
-    printf "${YELLOW}WARNING:${COLOROFF} Don't run this script with sudo. This script will call out to sudo if required.\n" >&2))
+# Use colors only if we are running in a terminal that supports colors...
+# and the user doesn't say they don't want colors
+if [[ -z $no_colors ]] && [[ -t 1 ]] && [[ -n $(tput colors) ]]; then
+    RED="\e[31m"
+    GREEN="\e[32m"
+    YELLOW="\e[33m"
+    BLUE="\e[34m"
+    COLOROFF="\e[39m"
+fi
+
+[[ $(id -u) == 0 ]] && ([[ -z "$SUDO_UID" ]] || ([[ -n "$sudo_ok" ]] ||
+    printf "%bWARNING:%b Don't run this script under sudo. This script will call out to sudo if required.\n" "$YELLOW" "$COLOROFF" >&2))
 
 if [[ "$verbose" == "1" ]] && [[ "$quiet" == "1" ]]; then
-    >&2 echo "Cannot be verbose and quiet simultaneously!"
+    printf "%bERROR%b: Cannot be verbose and quiet simultaneously!\n" "$RED" "$COLOROFF" >&2
     exit 1
 fi
 
+if [ -n "$verbose" ]; then
+    printf "%bINFO%b: Running in verbose mode...\n" "$GREEN" "$COLOROFF" >&2
+fi
+
 if [ -n "$rebuild_for" ]; then
-    pacman -Q "$rebuild_for" > /dev/null 2>&1
-    if [[ $? -ne 0 ]]; then
-        >&2 echo "ERROR: $rebuild_for is not an installed kernel!"
+    if ! (pacman -Q "$rebuild_for" > /dev/null 2>&1) ; then
+        printf "%bERROR%b: %s is not an installed kernel!\n" "$RED" "$COLOROFF" "$rebuild_for" >&2
         exit 1
     fi
-
-    printf 'Rebuidling for %s...\n' "$rebuild_for"
 
     base="$rebuild_for"
     _path=$(pacman -Ql "$rebuild_for" | grep "/usr/lib/modules/.\+" | head -n 1 | sed 's/^[^[:space:]]*[[:space:]]\{1,\}//')
@@ -137,10 +153,10 @@ for k in "${kernels[@]}"; do
     base=$(pacman -Qoq "$k" 2>/dev/null | head -n 1)
 
     if [[ "$base" == "" ]]; then
-        [[ -z $verbose ]] || >&2 echo "${version} is detected, but it is not an installed kernel!"
+        [[ -z $verbose ]] ||
+            printf "%bWARNING:%b %s is detected, but it is not an installed kernel!\n" "$YELLOW" "$COLOROFF" "${version}" >&2
         break
     fi
-    
+
     rebuild_for_base
 done
-
