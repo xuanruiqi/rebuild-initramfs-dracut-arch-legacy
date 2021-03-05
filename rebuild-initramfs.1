@@ -1,0 +1,74 @@
+.\" Manpage for rebuild-initramfs
+.\" Author: Xuanrui Qi <me@xuanruiqi.com>
+.TH REBUILD-INITRAMFS 1 "05 March 2021" "1.3.1" "rebuild-initramfs manual"
+
+.SH NAME
+rebuild-initramfs \- a command line tool to automate initramfs image creation with dracut
+
+.SH SYNOPSIS
+rebuild-initramfs [\fIOPTION\&...\fR] [\fI<kernel package name>\fR]
+
+.SH DESCRIPTION
+rebuild-initramfs is a command-line utility to automate initramfs image creation with \fBdracut\fR(8)
+on Arch Linux systems.
+
+.SH USAGE
+\fBrebuild-initramfs\fR
+.RS 4
+This will rebuild the initramfs image for all kernels versions installed as \fBpacman\fR(8) packages. By 
+default, the utility will ask before rebuilding for each kernel version found, and call \fBsudo\fR(8) 
+when necessary.
+.RE
+\fBrebuild-initramfs linux\fR
+.RS 4
+This will rebuild only the initramfs image for the "linux" kernel, i.e. the kernel installed as the "linux" package.
+.RE
+
+.SH OPTIONS
+.PP
+\fB\-y, \-\-yes\fR
+.RS 4
+Always say "yes" to prompts. This will cause all initramfs images to be rebuilt automatically for all 
+specified kernel versions.
+.RE
+
+\fB\-v, \-\-verbose\fR
+.RS 4
+Enter verbose mode, that is print more information to the console, which might be useful for debugging
+and other purposes.
+.RE
+
+\fB\-q, \-\-quiet\fR
+.RS 4
+Enter quiet mode. This will cause less information to be printed to the console, and will also pass the 
+\fB\-q\fR option to \fBdracut\fR(8). 
+.RE
+
+\fB\-k, \-\-hook\fR
+.RS 4
+Enter "hook mode", which is intended for using the utility in ALPM hooks (see also \fBalpm-hooks\fR(5)).
+This silences some warnings that might interfere with \fBpacman\fR(8)'s operations, and also implies \fB-y\fR.
+.RE
+
+\fB\-\-no-colors\fR
+.RS 4
+Do not use colors. If this option is not specified, then colors are used automatically if the console supports them.
+.RE
+
+\fB\-h, \-\-help\fR
+.RS 4
+Print help message and exit.
+.RE
+
+.SH SEE ALSO
+You might also want to refer to \fBdracut\fR(8).
+
+.SH BUGS
+If you find any bugs in the software, please report it at: https://github.com/xuanruiqi/rebuild-initramfs-dracut-arch/issues.
+
+.SH AUTHOR
+Xuanrui Qi <\fBme@xuanruiqi.com\fR>
+
+.SH LICENSE & COPYRIGHT
+The software is licensed for public use and reproduction under the terms of the MIT License. The author owns the copyright 
+and reserves all rights.
