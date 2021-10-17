@@ -63,7 +63,10 @@ rebuild_for_base() {
             sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
             printf "%b*%b Building fallback initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
             sudo_if_required dracut -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
-            [[ -d /boot ]] && sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
+            if [[ -d /boot ]]; then
+                printf "%b*%b Copying vmlinuz to /boot for %s\n" "$BLUE" "$COLOROFF" "${version}"
+                sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
+            fi
         fi
     else
         [[ -z $verbose ]] || printf "%bINFO:%b Not rebuilding initramfs image for %s.\n" "$GREEN" "$COLOROFF" "${version}"
