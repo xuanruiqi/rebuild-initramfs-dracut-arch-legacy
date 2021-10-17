@@ -48,14 +48,22 @@ rebuild_for_base() {
             printf "%bINFO%b: Running: dracut -v -f -N /boot/initramfs-%s-fallback.img --kver %s\n" "$GREEN" "$COLOROFF" \
                    "${base}" "${version}"
             sudo_if_required dracut -v -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+            if [[ -d /boot ]]; then
+                printf "%b*%b Copying vmlinuz to /boot for %s\n" "$BLUE" "$COLOROFF" "${version}"
+                printf "%bINFO%b: Running: install -Dm644 /usr/lib/modules/%s/vmlinuz /boot/vmlinuz-%s\n" "$GREEN" "$COLOROFF" \
+                       "${version}" "${base}"
+                sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
+            fi
         elif [[ -n $quiet ]]; then
             sudo_if_required dracut -q -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
             sudo_if_required dracut -q -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+            [[ -d /boot ]] && sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
         else
             printf "%b*%b Building initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
             sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
             printf "%b*%b Building fallback initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
             sudo_if_required dracut -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
+            [[ -d /boot ]] && sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
         fi
     else
         [[ -z $verbose ]] || printf "%bINFO:%b Not rebuilding initramfs image for %s.\n" "$GREEN" "$COLOROFF" "${version}"
