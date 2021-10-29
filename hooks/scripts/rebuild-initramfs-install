@@ -1,0 +1,33 @@
+#!/bin/bash -e
+
+kernels=()
+all=0
+
+while read -r line; do
+    if [[ ${line} != */vmlinuz ]]; then
+        # triggers when it's a change to /usr/lib/dracut/* or systemd
+        all=1
+        continue
+    fi
+
+    if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
+        # skip if no pkgbase
+        echo "No pkgbase"
+        continue
+    fi
+
+    # always install the kernel
+    install -Dm644 "${line}" "/boot/vmlinuz-${pkgbase}"
+
+    kernels+=("${pkgbase}")
+done
+
+if (( all )); then
+    rebuild-initramfs -k
+    exit
+fi
+
+if (( ${#kernels[@]} )); then
+    rebuild-initramfs -k "${kernels[@]}"
+fi
+

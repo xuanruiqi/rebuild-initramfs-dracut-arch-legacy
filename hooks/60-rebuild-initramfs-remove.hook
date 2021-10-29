@@ -1,0 +1,16 @@
+[Trigger]
+Type = Path
+Operation = Remove
+Target = usr/lib/modules/*/vmlinuz
+
+[Trigger]
+Type = Package
+Operation = Remove
+Target = dracut
+Target = rebuild-initramfs-dracut
+
+[Action]
+Description = Removing linux initcpios...
+When = PreTransaction
+Exec = /usr/share/libalpm/scripts/rebuild-initramfs-remove
+NeedsTargets
