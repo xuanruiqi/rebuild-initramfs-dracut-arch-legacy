@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 while read -r line; do
-    if [[ "${line}" == '*vmlinuz' ]]; then
+    if [[ ${line} == */vmlinuz ]]; then
         read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"
         rm -f "/boot/vmlinuz-${pkgbase}" "/boot/initramfs-${pkgbase}.img" \
            "/boot/initramfs-${pkgbase}-fallback.img"
