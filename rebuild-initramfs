@@ -5,8 +5,9 @@ verbose=
 default_yes=
 quiet=
 sudo_ok=
-rebuild_for=
 no_colors=
+
+rebuild_for=()
 
 prompt() {
     while true; do
@@ -114,7 +115,7 @@ do
             no_colors=1
             shift;;
         *)
-            rebuild_for=$arg
+            rebuild_for+=("${arg}")
             shift;;
     esac
 done
@@ -141,17 +142,19 @@ if [ -n "$verbose" ]; then
     printf "%bINFO%b: Running in verbose mode...\n" "$GREEN" "$COLOROFF" >&2
 fi
 
-if [ -n "$rebuild_for" ]; then
-    if ! (pacman -Q "$rebuild_for" > /dev/null 2>&1) ; then
-        printf "%bERROR%b: %s is not an installed kernel!\n" "$RED" "$COLOROFF" "$rebuild_for" >&2
-        exit 1
-    fi
+if (( ${#rebuild_for[@]} )); then
+    for k in "${rebuild_for[@]}"; do
+        if ! (pacman -Q "$k" > /dev/null 2>&1) ; then
+            printf "%bWARNING%b: %s is not an installed kernel!\n" "$YELLOW" "$COLOROFF" "$k" >&2
+            continue
+        fi
 
-    base="$rebuild_for"
-    _path=$(pacman -Ql "$rebuild_for" | grep "/usr/lib/modules/.\+" | head -n 1 | sed 's/^[^[:space:]]*[[:space:]]\{1,\}//')
-    version=$(basename "$_path")
+        base="$k"
+        _path=$(pacman -Ql "$k" | grep "/usr/lib/modules/.\+" | head -n 1 | sed 's/^[^[:space:]]*[[:space:]]\{1,\}//')
+        version=$(basename "$_path")
 
-    rebuild_for_base
+        rebuild_for_base
+    done
 
     exit
 fi
