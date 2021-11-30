@@ -1,6 +1,6 @@
 .\" Manpage for rebuild-initramfs
 .\" Author: Xuanrui Qi <me@xuanruiqi.com>
-.TH REBUILD-INITRAMFS 1 "30 October 2021" "1.6.1" "rebuild-initramfs manual"
+.TH REBUILD-INITRAMFS 1 "26 November 2021" "1.7.0" "rebuild-initramfs manual"
 
 .SH NAME
 rebuild-initramfs \- a command line tool to automate initramfs image creation with dracut
@@ -28,6 +28,11 @@ This will rebuild only the initramfs image for the "linux" kernel, i.e. the kern
 \fBrebuild-initramfs linux linux-lts\fR
 .RS 4
 This will rebuild the initramfs image for the "linux" and "linux-lts" kernels.
+.RE
+
+\fBrebuild-initramfs --key MOK.key --cert MOK.crt linux \fR
+.RS 4
+This will rebuild the initramfs image for the "linux" kernel and sign the kernel image using \fIMOK.key\fR and \fIMOK.crt\fR.
 .RE
 
 .SH OPTIONS
@@ -59,6 +64,18 @@ This silences some warnings that might interfere with \fBpacman\fR(8)'s operatio
 \fB\-\-no-colors\fR
 .RS 4
 Do not use colors. If this option is not specified, then colors are used automatically if the console supports them.
+.RE
+
+\fB\-\-key\fR \fIkey_file\fR
+.RS 4
+Machine Owner Key (MOK) key file used to sign kernel image for Secure Boot. If this option is given, then \fB--cert\fR
+must also be given.
+.RE
+
+\fB\-\-cert\fR \fIcert_file\fR
+.RS 4
+Machine Owner Key (MOK) certificate file used to sign kernel image for Secure Boot. If this option is given, then \fB--key\fR
+must also be given.
 .RE
 
 \fB\-h, \-\-help\fR
