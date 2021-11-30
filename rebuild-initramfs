@@ -162,7 +162,7 @@ if [[ -n $sb_key && -n $sb_cert ]]; then
         exit 1
     fi
     do_sign=1
-elif [[ -z $sb_key && -n $sb_cert ]]; then
+elif [[ -z $sb_key && -z $sb_cert ]]; then
     do_sign=0
 else
     printf "%bERROR%b: To perform kernel image signing, both a key and a certificate must be provided!" "$RED" "$COLOROFF" >&2
