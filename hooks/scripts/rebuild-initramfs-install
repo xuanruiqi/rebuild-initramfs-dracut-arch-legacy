@@ -2,17 +2,6 @@
 
 kernels=()
 all=0
-sign=0
-key_path=
-cert_path=
-
-if [[ -f /etc/rebuild-initramfs.conf ]]; then
-    source /etc/rebuild-initramfs.conf
-
-    if [[ "${key_path}" != "" ]] && [[ "${cert_path}" != "" ]]; then
-        sign=1
-    fi
-fi
 
 while read -r line; do
     if [[ ${line} != */vmlinuz ]]; then
@@ -26,16 +15,14 @@ while read -r line; do
     fi
 
     # always install the kernel
-    install -Dm644 "${line}" "/boot/vmlinuz-${pkgbase}"
+    echo "install to /boot/vmlinuz-${pkgbase}" >&2
+    # install -Dm644 "${line}" "/boot/vmlinuz-${pkgbase}"
 
     kernels+=( "${pkgbase}" )
 done
 
 args=( -k )
 
-if (( sign )); then
-    args+=( --key "${key_path}" --cert "${cert_path}" )
-fi
 
 if ! (( all )) && (( ${#kernels[@]} )); then
     args+=( "${kernels[@]}" )

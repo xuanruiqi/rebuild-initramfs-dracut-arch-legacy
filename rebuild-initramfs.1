@@ -1,6 +1,6 @@
 .\" Manpage for rebuild-initramfs
 .\" Author: Xuanrui Qi <me@xuanruiqi.com>
-.TH REBUILD-INITRAMFS 1 "1 December 2021" "1.7.1" "rebuild-initramfs manual"
+.TH REBUILD-INITRAMFS 1 "2 December 2021" "1.7.2" "rebuild-initramfs manual"
 
 .SH NAME
 rebuild-initramfs \- a command line tool to automate initramfs image creation with dracut
@@ -82,6 +82,10 @@ must also be given.
 .RS 4
 Print help message and exit.
 .RE
+
+.SH CONFIGURATIOn
+You may configure the path to MOK key and certificate files in \fI/etc/rebuild-initramfs.conf\fR. This is equivalent to supplying
+\fB\-\-key\fR and \fB\-\-cert\fR on the command line.
 
 .SH SEE ALSO
 You might also want to refer to \fBdracut\fR(8).

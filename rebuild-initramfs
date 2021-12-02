@@ -57,7 +57,7 @@ rebuild_for_base() {
                 printf "%bINFO%b: Running: install -Dm644 /usr/lib/modules/%s/vmlinuz /boot/vmlinuz-%s\n" "$GREEN" "$COLOROFF" \
                        "${version}" "${base}"
                 sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
-                if [[ -n $do_sign ]]; then
+                if (( do_sign )); then
                     printf "%b*%b Signing vmlinuz for %s\n" "$BLUE" "$COLOROFF" "${version}"
                     printf "%bINFO%b: Running: sbsign --key %s --cert %s --output /boot/vmlinuz-%s /boot/vmlinuz-%s" "$GREEN" "$COLOROFF" \
                            "${sb_key}" "${sb_cert}" "${base}" "${base}"
@@ -69,7 +69,7 @@ rebuild_for_base() {
             sudo_if_required dracut -q -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
             if [[ -d /boot ]]; then
                 sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
-                [[ -n $do_sign ]] && sudo_if_required sbsign --key "${sb_key}" --cert "${sb_cert}" --output \
+                (( do_sign )) && sudo_if_required sbsign --key "${sb_key}" --cert "${sb_cert}" --output \
                                                       "/boot/vmlinuz-${base}" "/boot/vmlinuz-${base}"
             fi
         else
@@ -80,7 +80,7 @@ rebuild_for_base() {
             if [[ -d /boot ]]; then
                 printf "%b*%b Copying vmlinuz to /boot for %s\n" "$BLUE" "$COLOROFF" "${version}"
                 sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
-                if [[ -n $do_sign ]]; then
+                if (( do_sign )); then
                     printf "%b*%b Signing vmlinuz for %s\n" "$BLUE" "$COLOROFF" "${version}"
                     sudo_if_required sbsign --key "${sb_key}" --cert "${sb_cert}" --output "/boot/vmlinuz-${base}" "/boot/vmlinuz-${base}"
                 fi
@@ -156,16 +156,28 @@ if [[ -z $no_colors ]] && [[ -t 1 ]] && [[ -n $(tput colors) ]]; then
     COLOROFF="\e[39m"
 fi
 
+# prority given to key and cert given as command line arugments
 if [[ -n $sb_key && -n $sb_cert ]]; then
-    if ! command -v sbsign &> /dev/null; then
-        printf "%bERROR%b: To perform kernel image signing, the %bsbsigntools%b package must be installed!" "$RED" "$COLOROFF" "$BLUE" "$COLOROFF" >&2
+    do_sign=1
+else
+    if [[ -f /etc/rebuild-initramfs.conf ]]; then
+        source /etc/rebuild-initramfs.conf
+    fi
+
+    if [[ -n $key_path && -n $cert_path ]]; then
+        do_sign=1
+        sb_key=$key_path
+        sb_cert=$cert_path
+    elif [[ -z $sb_key && -z $sb_cert ]]; then
+        do_sign=0
+    else
+        printf "%bERROR%b: To perform kernel image signing, both a key and a certificate must be provided!" "$RED" "$COLOROFF" >&2
         exit 1
     fi
-    do_sign=1
-elif [[ -z $sb_key && -z $sb_cert ]]; then
-    do_sign=0
-else
-    printf "%bERROR%b: To perform kernel image signing, both a key and a certificate must be provided!" "$RED" "$COLOROFF" >&2
+fi
+
+if (( do_sign )) && ! command -v sbsign &> /dev/null; then
+    printf "%bERROR%b: To perform kernel image signing, the %bsbsigntools%b package must be installed!" "$RED" "$COLOROFF" "$BLUE" "$COLOROFF" >&2
     exit 1
 fi
 
@@ -177,7 +189,7 @@ if [[ "$verbose" == "1" ]] && [[ "$quiet" == "1" ]]; then
     exit 1
 fi
 
-if [ -n "$verbose" ]; then
+if [[ -n "$verbose" ]]; then
     printf "%bINFO%b: Running in verbose mode...\n" "$GREEN" "$COLOROFF" >&2
 fi
 
