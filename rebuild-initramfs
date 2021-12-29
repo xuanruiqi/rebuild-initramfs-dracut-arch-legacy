@@ -215,12 +215,17 @@ mapfile -t kernels < <(ls -d /usr/lib/modules/*/)
 
 for k in "${kernels[@]}"; do
     version=$(basename "$k")
+
+    if [[ ! -f "${k}/pkgbase" ]]; then
+        continue
+    fi
+
     base=$(cat "${k}/pkgbase")
 
     if [[ "$base" == "" ]]; then
         [[ -z $verbose ]] ||
             printf "%bWARNING:%b %s is detected, but it is not an installed kernel!\n" "$YELLOW" "$COLOROFF" "${version}" >&2
-        break
+        continue
     fi
 
     rebuild_for_base
