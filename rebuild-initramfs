@@ -45,9 +45,9 @@ rebuild_for_base() {
     if [[ "$do_build" == "1" ]]; then
         if [[ -n $verbose ]]; then
             printf "%b*%b Building initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
-            printf "%bINFO%b: Running: dracut -v -f --no-hostonly-cmdline /boot/initramfs-%s.img --kver %s\n" "$GREEN" "$COLOROFF" \
+            printf "%bINFO%b: Running: dracut -v -f --no-hostonly-cmdline -H /boot/initramfs-%s.img --kver %s\n" "$GREEN" "$COLOROFF" \
                    "${base}" "${version}"
-            sudo_if_required dracut -v -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
+            sudo_if_required dracut -v -f --no-hostonly-cmdline -H /boot/initramfs-"${base}".img --kver "${version}"
             printf "%b*%b Building fallback initramfs for %s\n" "$GREEN" "$COLOROFF" "${version}"
             printf "%bINFO%b: Running: dracut -v -f -N /boot/initramfs-%s-fallback.img --kver %s\n" "$GREEN" "$COLOROFF" \
                    "${base}" "${version}"
@@ -65,7 +65,7 @@ rebuild_for_base() {
                 fi
             fi
         elif [[ -n $quiet ]]; then
-            sudo_if_required dracut -q -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
+            sudo_if_required dracut -q -f --no-hostonly-cmdline -H /boot/initramfs-"${base}".img --kver "${version}"
             sudo_if_required dracut -q -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
             if [[ -d /boot ]]; then
                 sudo_if_required install -Dm644 "/usr/lib/modules/${version}/vmlinuz" "/boot/vmlinuz-${base}"
@@ -74,7 +74,7 @@ rebuild_for_base() {
             fi
         else
             printf "%b*%b Building initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
-            sudo_if_required dracut -f --no-hostonly-cmdline /boot/initramfs-"${base}".img --kver "${version}"
+            sudo_if_required dracut -f --no-hostonly-cmdline -H /boot/initramfs-"${base}".img --kver "${version}"
             printf "%b*%b Building fallback initramfs for %s\n" "$BLUE" "$COLOROFF" "${version}"
             sudo_if_required dracut -f -N /boot/initramfs-"${base}"-fallback.img --kver "${version}"
             if [[ -d /boot ]]; then
